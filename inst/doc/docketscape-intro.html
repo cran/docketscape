@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Shraddha Ajit and DK Janani" />
+
+<meta name="date" content="2026-10-28" />
+
+<title>Introduction to docketscape: Legal Network and Congestion-Aware Delay Modeling</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Introduction to docketscape: Legal Network
+and Congestion-Aware Delay Modeling</h1>
+<h4 class="author">Shraddha Ajit and DK Janani</h4>
+<h4 class="date">2026-10-28</h4>
+
+
+
+<div id="motivation" class="section level2">
+<h2>1. Motivation</h2>
+<p>Empirical research on judicial court delay often struggles to
+separate two fundamentally different phenomena:</p>
+<ol style="list-style-type: decimal">
+<li><strong>What a case is</strong> — its statutory complexity and
+substantive nature, determined by the Acts and Sections invoked.</li>
+<li><strong>Where the case sits</strong> — the institutional congestion
+and docket queue of the specific court at the time of filing.</li>
+</ol>
+<p>Traditional empirical analyses frequently aggregate diverse cases
+into broad categories (e.g. “Criminal” or “Civil”), overlooking
+intricate statutory differences. Furthermore, ongoing matters that
+remain pending at the observation cutoff are often improperly excluded
+or treated as missing values, introducing substantial survivor bias.</p>
+<p><code>docketscape</code> addresses these challenges by: -
+Constructing statutory co-occurrence graphs and diffusing legal profiles
+across provisions. - Estimating censoring-aware expected resolution
+timelines from legally similar historical peers using weighted
+Kaplan-Meier curves. - Quantifying baseline court docket load at filing.
+- Modeling observational resolution hazards via Cox proportional hazards
+regression and decomposing fitted linear predictors. - Auditing and
+preventing future-information leakage during temporal holdout
+validation.</p>
+<blockquote>
+<p><strong>Methodological Boundary:</strong> <code>docketscape</code> is
+an observational modeling tool designed for case-level records
+structured similarly to the Development Data Lab (DDL) Indian
+lower-court database. It contains <strong>no empirical DDL
+records</strong> and uses simulated synthetic data throughout. It does
+<strong>not</strong> evaluate judicial efficiency, rank individual
+judges, establish causal mechanisms of delay, or determine whether an
+individual case was mishandled.</p>
+</blockquote>
+<hr />
+</div>
+<div id="input-data-structures" class="section level2">
+<h2>2. Input Data Structures</h2>
+<p>The package works with two primary tabular inputs:</p>
+<ol style="list-style-type: decimal">
+<li><strong>Case Records (<code>cases</code>)</strong>: A table
+containing at least <code>case_id</code>, <code>filing_date</code>, and
+<code>decision_date</code> (with <code>NA</code> for pending cases),
+plus optional administrative identifiers such as
+<code>court</code>.</li>
+<li><strong>Legal Section Records (<code>sections</code>)</strong>: A
+table linking each case to its cited statutory provisions, containing
+<code>case_id</code>, <code>act</code>, and <code>section</code>.</li>
+</ol>
+<p>All data structures in this vignette are generated synthetically for
+demonstration:</p>
+<p>Let us create a representative synthetic dataset:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(docketscape)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a>n_cases <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>cases_raw <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>  <span class="at">case_id =</span> <span class="dv">1</span><span class="sc">:</span>n_cases,</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>  <span class="at">court =</span> <span class="fu">sample</span>(<span class="fu">c</span>(<span class="st">&quot;Court_A&quot;</span>, <span class="st">&quot;Court_B&quot;</span>), n_cases, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>  <span class="at">filing_date =</span> <span class="fu">sample</span>(<span class="fu">seq.Date</span>(<span class="fu">as.Date</span>(<span class="st">&quot;2012-01-01&quot;</span>), <span class="fu">as.Date</span>(<span class="st">&quot;2013-03-01&quot;</span>), <span class="at">by =</span> <span class="st">&quot;month&quot;</span>), n_cases, <span class="at">replace =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>  <span class="at">duration_days =</span> <span class="fu">round</span>(<span class="fu">runif</span>(n_cases, <span class="dv">60</span>, <span class="dv">500</span>)),</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a>  <span class="at">disposed =</span> <span class="fu">rbinom</span>(n_cases, <span class="dv">1</span>, <span class="fl">0.70</span>),</span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="co"># Pending cases have NA for decision_date</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>cases_raw<span class="sc">$</span>decision_date <span class="ot">&lt;-</span> <span class="fu">as.Date</span>(<span class="cn">NA</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a>cases_raw<span class="sc">$</span>decision_date[cases_raw<span class="sc">$</span>disposed <span class="sc">==</span> <span class="dv">1</span>] <span class="ot">&lt;-</span> </span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  cases_raw<span class="sc">$</span>filing_date[cases_raw<span class="sc">$</span>disposed <span class="sc">==</span> <span class="dv">1</span>] <span class="sc">+</span> cases_raw<span class="sc">$</span>duration_days[cases_raw<span class="sc">$</span>disposed <span class="sc">==</span> <span class="dv">1</span>]</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a><span class="co"># Simulate legal sections</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>acts <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;NI Act&quot;</span>, <span class="st">&quot;IPC&quot;</span>, <span class="st">&quot;CrPC&quot;</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>secs <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="st">&quot;NI Act&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;138&quot;</span>, <span class="st">&quot;141&quot;</span>), <span class="st">&quot;IPC&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;420&quot;</span>, <span class="st">&quot;406&quot;</span>), <span class="st">&quot;CrPC&quot;</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="st">&quot;154&quot;</span>, <span class="st">&quot;482&quot;</span>))</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>sec_rows <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span>n_cases, <span class="cf">function</span>(i) {</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>  n_s <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>, <span class="dv">1</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>  act_sample <span class="ot">&lt;-</span> <span class="fu">sample</span>(acts, n_s, <span class="at">replace =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>  sec_sample <span class="ot">&lt;-</span> <span class="fu">sapply</span>(act_sample, <span class="cf">function</span>(a) <span class="fu">sample</span>(secs[[a]], <span class="dv">1</span>))</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">case_id =</span> i, <span class="at">act =</span> <span class="fu">unname</span>(act_sample), <span class="at">section =</span> <span class="fu">unname</span>(sec_sample), <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>})</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>sections_raw <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">do.call</span>(rbind, sec_rows))</span></code></pre></div>
+<hr />
+</div>
+<div id="case-cleaning-and-censoring-handling-clean_cases" class="section level2">
+<h2>3. Case Cleaning and Censoring Handling
+(<code>clean_cases</code>)</h2>
+<p><code>clean_cases()</code> standardises filing and decision dates,
+evaluates durations relative to an observation cutoff, and flags invalid
+records (such as decisions preceding filing or filings after cutoff)
+without silent deletion.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>cleaned <span class="ot">&lt;-</span> <span class="fu">clean_cases</span>(cases_raw, <span class="at">observation_end =</span> <span class="st">&quot;2014-12-31&quot;</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a><span class="fu">head</span>(cleaned[, <span class="fu">c</span>(<span class="st">&quot;case_id&quot;</span>, <span class="st">&quot;court&quot;</span>, <span class="st">&quot;duration&quot;</span>, <span class="st">&quot;event&quot;</span>, <span class="st">&quot;is_valid&quot;</span>)])</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt;   case_id   court duration event is_valid</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt; 1       1 Court_A      229     1     TRUE</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt; 2       2 Court_A      181     1     TRUE</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt; 3       3 Court_A      418     1     TRUE</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt; 4       4 Court_B      257     1     TRUE</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt; 5       5 Court_A      698     0     TRUE</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt; 6       6 Court_B      417     1     TRUE</span></span></code></pre></div>
+<ul>
+<li>Disposed cases receive <code>event = 1</code> and duration equal to
+elapsed days to disposition.</li>
+<li>Pending cases receive <code>event = 0</code> (right-censored) and
+duration equal to follow-up from filing to
+<code>observation_end</code>.</li>
+</ul>
+<hr />
+</div>
+<div id="legal-network-representation-build_section_graph" class="section level2">
+<h2>4. Legal Network Representation
+(<code>build_section_graph</code>)</h2>
+<p>Sections cited within the same case reflect statutory co-occurrence.
+<code>build_section_graph()</code> constructs an undirected graph where
+nodes represent <code>Act::Section</code> pairs and edge weights count
+distinct cases citing both provisions:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>sec_graph <span class="ot">&lt;-</span> <span class="fu">build_section_graph</span>(sections_raw)</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a><span class="fu">print</span>(sec_graph)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; IGRAPH f88c94e UNW- 6 10 -- </span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; + attr: name (v/c), act (v/c), section (v/c), identifier (v/c), weight</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; | (e/n)</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; + edges from f88c94e (vertex names):</span></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;  [1] CrPC::154  --IPC::406    CrPC::154  --IPC::420    CrPC::154  --NI Act::138</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt;  [4] CrPC::154  --NI Act::141 CrPC::482  --IPC::420    IPC::406   --IPC::420   </span></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#&gt;  [7] IPC::406   --NI Act::138 IPC::420   --NI Act::138 IPC::420   --NI Act::141</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a><span class="co">#&gt; [10] NI Act::138--NI Act::141</span></span></code></pre></div>
+<hr />
+</div>
+<div id="profile-diffusion-diffuse_profiles" class="section level2">
+<h2>5. Profile Diffusion (<code>diffuse_profiles</code>)</h2>
+<p>Raw citation vectors are sparse. A case citing Section 420 shares
+statutory affinities with Section 406 if those sections frequently
+co-occur in other matters.</p>
+<p><code>diffuse_profiles()</code> applies one-step weighted profile
+diffusion over the row-stochastic transition matrix <span class="math inline">\(P = D^{-1} A\)</span>:</p>
+<p><span class="math display">\[X_{\text{raw}} = \alpha X_{\text{init}}
++ (1 - \alpha) X_{\text{init}} P\]</span></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>diffused <span class="ot">&lt;-</span> <span class="fu">diffuse_profiles</span>(sections_raw, sec_graph, <span class="at">alpha =</span> <span class="fl">0.7</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="fu">print</span>(diffused)</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; Diffused Case Legal Profiles</span></span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a><span class="co">#&gt; ============================</span></span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a><span class="co">#&gt; Number of cases:     30 </span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; Number of sections:  6 </span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt; Alpha parameter:     0.7 </span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt; Sparse matrix size:  30 x 6</span></span></code></pre></div>
+<hr />
+</div>
+<div id="case-similarity-graph-build_case_graph" class="section level2">
+<h2>6. Case Similarity Graph (<code>build_case_graph</code>)</h2>
+<p><code>build_case_graph()</code> computes pairwise cosine similarities
+across IDF-weighted diffused vectors and retains the top-<span class="math inline">\(k\)</span> nearest neighbours for each case,
+breaking ties deterministically by <code>case_id</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>case_graph <span class="ot">&lt;-</span> <span class="fu">build_case_graph</span>(diffused, <span class="at">k =</span> <span class="dv">3</span>, <span class="at">use_idf =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="fu">print</span>(case_graph)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; IGRAPH f8abe9b UNW- 30 63 -- </span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; + attr: name (v/c), case_id (v/c), weight (e/n)</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="co">#&gt; + edges from f8abe9b (vertex names):</span></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt;  [1] 1 --16 1 --17 1 --18 1 --22 1 --25 1 --6  1 --7  10--11 10--13 10--20</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt; [11] 10--26 10--29 11--13 11--14 11--15 11--19 11--20 11--27 12--14 12--18</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt; [21] 12--23 12--28 13--14 13--15 13--19 13--20 13--27 15--27 16--17 16--25</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt; [31] 17--25 2 --11 2 --13 2 --15 21--26 21--28 22--28 23--26 23--29 24--26</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; [41] 24--30 26--29 26--30 3 --11 3 --13 3 --19 4 --12 4 --21 4 --22 4 --28</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; [51] 5 --10 5 --26 5 --29 6 --16 6 --25 7 --12 7 --18 8 --11 8 --13 8 --14</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; [61] 9 --24 9 --26 9 --30</span></span></code></pre></div>
+<p>Mutual connections are symmetrized to form an undirected similarity
+graph.</p>
+<hr />
+</div>
+<div id="neighbourhood-survival-experience-neighbourhood_survival" class="section level2">
+<h2>7. Neighbourhood Survival Experience
+(<code>neighbourhood_survival</code>)</h2>
+<p>For any focal case, an expected resolution timeline is estimated from
+its legally similar neighbours using weighted Kaplan-Meier
+estimation:</p>
+<p><span class="math display">\[\hat{S}(t) = \prod_{t_{(j)} \le t}
+\left(1 - \frac{\sum_{i \in \mathcal{D}_j} w_i}{\sum_{l \in
+\mathcal{R}_j} w_l}\right)\]</span></p>
+<p>where weights <span class="math inline">\(w_i\)</span> correspond to
+graph edge similarity weights. Censored neighbours remain in the risk
+set until their censoring time, avoiding bias against long-running
+matters.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>km_focal <span class="ot">&lt;-</span> <span class="fu">neighbourhood_survival</span>(case_graph, cleaned, <span class="at">case_id =</span> <span class="dv">1</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">print</span>(km_focal)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a><span class="co">#&gt; Neighbourhood Survival Estimate</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="co">#&gt; ===============================</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt; Target Case ID:    1 </span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; Target Status:     disposed </span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a><span class="co">#&gt; Target Duration:   229 days</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt; Valid Neighbours:  7 </span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; Median Survival:   410 days</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; Estimated Survival Table:</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt;   time n_at_risk  n_events      surv</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 1    0  6.095324 0.0000000 1.0000000</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt; 2  109  6.095324 0.8010361 0.8685819</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt; 3  215  5.294288 0.7643170 0.7431879</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt; 4  330  4.529971 1.0000000 0.5791277</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt; 5  410  3.529971 0.8010361 0.4477095</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt; 6  417  2.728935 1.0000000 0.2836493</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt; 7  493  1.728935 1.0000000 0.1195892</span></span></code></pre></div>
+<p>The peer survival curve can be visualized directly using standard
+base R graphics without any extra graph or plotting packages:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>surv_tab <span class="ot">&lt;-</span> km_focal<span class="sc">$</span>survival_table</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">plot</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  surv_tab<span class="sc">$</span>time, surv_tab<span class="sc">$</span>surv,</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">type =</span> <span class="st">&quot;s&quot;</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">lwd =</span> <span class="dv">2</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">col =</span> <span class="st">&quot;darkblue&quot;</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">&quot;Time (days)&quot;</span>,</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">&quot;Estimated Survival Probability S(t)&quot;</span>,</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">main =</span> <span class="fu">paste</span>(<span class="st">&quot;Neighbourhood Survival Curve for Case&quot;</span>, km_focal<span class="sc">$</span>target_case_id),</span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  <span class="at">ylim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>)</span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="fl">0.5</span>, <span class="at">lty =</span> <span class="dv">2</span>, <span class="at">col =</span> <span class="st">&quot;grey50&quot;</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(km_focal<span class="sc">$</span>target_duration)) {</span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="fu">abline</span>(<span class="at">v =</span> km_focal<span class="sc">$</span>target_duration, <span class="at">col =</span> <span class="st">&quot;firebrick&quot;</span>, <span class="at">lty =</span> <span class="dv">3</span>, <span class="at">lwd =</span> <span class="dv">2</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>}</span>
+<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a><span class="fu">grid</span>()</span>
+<span id="cb7-18"><a href="#cb7-18" tabindex="-1"></a><span class="fu">legend</span>(</span>
+<span id="cb7-19"><a href="#cb7-19" tabindex="-1"></a>  <span class="st">&quot;topright&quot;</span>,</span>
+<span id="cb7-20"><a href="#cb7-20" tabindex="-1"></a>  <span class="at">legend =</span> <span class="fu">c</span>(<span class="st">&quot;Peer Survival S(t)&quot;</span>, <span class="st">&quot;Median Threshold (50%)&quot;</span>, <span class="st">&quot;Target Case Duration&quot;</span>),</span>
+<span id="cb7-21"><a href="#cb7-21" tabindex="-1"></a>  <span class="at">col =</span> <span class="fu">c</span>(<span class="st">&quot;darkblue&quot;</span>, <span class="st">&quot;grey50&quot;</span>, <span class="st">&quot;firebrick&quot;</span>),</span>
+<span id="cb7-22"><a href="#cb7-22" tabindex="-1"></a>  <span class="at">lty =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>),</span>
+<span id="cb7-23"><a href="#cb7-23" tabindex="-1"></a>  <span class="at">lwd =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">2</span>),</span>
+<span id="cb7-24"><a href="#cb7-24" tabindex="-1"></a>  <span class="at">bty =</span> <span class="st">&quot;n&quot;</span></span>
+<span id="cb7-25"><a href="#cb7-25" tabindex="-1"></a>)</span></code></pre></div>
+<p><img role="img" src="data:image/png;base64,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" /><!-- --></p>
+<hr />
+</div>
+<div id="relative-lateness-relative_lateness" class="section level2">
+<h2>8. Relative Lateness (<code>relative_lateness</code>)</h2>
+<p>Relative lateness evaluates the focal case duration against the peer
+survival curve:</p>
+<p><span class="math display">\[\text{relative\_position} = 1 -
+S(T)\]</span></p>
+<p>where <span class="math inline">\(T\)</span> is the focal case
+duration.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>lateness <span class="ot">&lt;-</span> <span class="fu">relative_lateness</span>(km_focal)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">print</span>(lateness)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="co">#&gt; Relative Case Lateness</span></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="co">#&gt; ======================</span></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a><span class="co">#&gt; Target Case ID:               1 </span></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a><span class="co">#&gt; Target Status:                disposed </span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="co">#&gt; Target Duration:              229 days</span></span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; Valid Neighbours:             7 </span></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; Estimable:                    TRUE </span></span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; Median Neighbourhood Survival: 410 days</span></span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a><span class="co">#&gt; Survival at Target Duration:  0.7432 </span></span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a><span class="co">#&gt; Relative Position:           0.2568 (25.7th percentile)</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a><span class="co">#&gt; Interpretation:</span></span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a><span class="co">#&gt; Retrospectively, at its resolution duration of 229 days, the case was older than approximately 25.7% of the weighted legally similar resolution experience.</span></span></code></pre></div>
+<p>If the focal duration exceeds the maximum follow-up among neighbours,
+<code>docketscape</code> flags the metric as unestimable
+(<code>estimable = FALSE</code>) rather than extrapolating beyond
+observed data.</p>
+<hr />
+</div>
+<div id="court-docket-load-court_load" class="section level2">
+<h2>9. Court Docket Load (<code>court_load</code>)</h2>
+<p><code>court_load()</code> calculates monthly open docket volume
+across courts:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>load_df <span class="ot">&lt;-</span> <span class="fu">court_load</span>(cleaned, <span class="at">by =</span> <span class="st">&quot;month&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">head</span>(load_df)</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="co">#&gt; Court Docket Load Summary</span></span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a><span class="co">#&gt; =========================</span></span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a><span class="co">#&gt; Number of courts: 1 (Court_A)</span></span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a><span class="co">#&gt; Date range:        2012-01-01  to  2012-06-01 </span></span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a><span class="co">#&gt; Min load:          0 </span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a><span class="co">#&gt; Max load:          6 </span></span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a><span class="co">#&gt; Head of court_load data:</span></span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a><span class="co">#&gt;     court       date load</span></span>
+<span id="cb9-12"><a href="#cb9-12" tabindex="-1"></a><span class="co">#&gt; 1 Court_A 2012-01-01    0</span></span>
+<span id="cb9-13"><a href="#cb9-13" tabindex="-1"></a><span class="co">#&gt; 2 Court_A 2012-02-01    0</span></span>
+<span id="cb9-14"><a href="#cb9-14" tabindex="-1"></a><span class="co">#&gt; 3 Court_A 2012-03-01    1</span></span>
+<span id="cb9-15"><a href="#cb9-15" tabindex="-1"></a><span class="co">#&gt; 4 Court_A 2012-04-01    1</span></span>
+<span id="cb9-16"><a href="#cb9-16" tabindex="-1"></a><span class="co">#&gt; 5 Court_A 2012-05-01    5</span></span>
+<span id="cb9-17"><a href="#cb9-17" tabindex="-1"></a><span class="co">#&gt; 6 Court_A 2012-06-01    6</span></span></code></pre></div>
+<p>Each case’s <code>load_at_filing</code> is aligned to the first day
+of its calendar month (<code>format(filing_date, &quot;%Y-%m-01&quot;)</code>),
+reflecting initial queue volume.</p>
+<hr />
+</div>
+<div id="cox-delay-model-fit_delay_model" class="section level2">
+<h2>10. Cox Delay Model (<code>fit_delay_model</code>)</h2>
+<p>Case resolution hazard is modeled using semi-parametric Cox
+proportional hazards regression:</p>
+<p><span class="math display">\[\lambda(t \mid X) = \lambda_0(t)
+\exp\left(\beta_{\text{legal}} \cdot \text{legal\_score}_i +
+\beta_{\text{load}} \cdot \text{load\_at\_filing}_i\right)\]</span></p>
+<ul>
+<li><code>legal_score</code>: Mean similarity weight of incident edges
+in the case graph.</li>
+<li><code>load_at_filing</code>: Monthly court docket volume at case
+filing.</li>
+</ul>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">fit_delay_model</span>(cleaned, case_graph, load_df)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">print</span>(fit)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="co">#&gt; Docketscape Delay Model (Cox Proportional Hazards)</span></span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a><span class="co">#&gt; =================================================</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a><span class="co">#&gt; Status:        Cox proportional hazards model fitted successfully. </span></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a><span class="co">#&gt; Observations: 30 included, 0 excluded</span></span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a><span class="co">#&gt; Events:        22  resolutions observed</span></span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a><span class="co">#&gt; Hazard Ratios &amp; 95% Confidence Intervals:</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a><span class="co">#&gt;             term hazard_ratio   conf_low conf_high</span></span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a><span class="co">#&gt; 1    legal_score     2.419567 0.01367269 428.17501</span></span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a><span class="co">#&gt; 2 load_at_filing     1.014968 0.90821479   1.13427</span></span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a><span class="co">#&gt; Coefficient Estimates:</span></span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a><span class="co">#&gt;             term   estimate  std_error statistic   p_value</span></span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a><span class="co">#&gt; 1    legal_score 0.88358872 2.64083592 0.3345868 0.7379368</span></span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="co">#&gt; 2 load_at_filing 0.01485743 0.05670094 0.2620314 0.7932972</span></span>
+<span id="cb10-18"><a href="#cb10-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-19"><a href="#cb10-19" tabindex="-1"></a><span class="co">#&gt; Proportional Hazards Assumption Test (cox.zph):</span></span>
+<span id="cb10-20"><a href="#cb10-20" tabindex="-1"></a><span class="co">#&gt;                chisq df    p</span></span>
+<span id="cb10-21"><a href="#cb10-21" tabindex="-1"></a><span class="co">#&gt; legal_score     1.76  1 0.18</span></span>
+<span id="cb10-22"><a href="#cb10-22" tabindex="-1"></a><span class="co">#&gt; load_at_filing  2.34  1 0.13</span></span>
+<span id="cb10-23"><a href="#cb10-23" tabindex="-1"></a><span class="co">#&gt; GLOBAL          3.93  2 0.14</span></span>
+<span id="cb10-24"><a href="#cb10-24" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb10-25"><a href="#cb10-25" tabindex="-1"></a><span class="co">#&gt; Note: Hazard ratios quantify observational baseline associations with resolution hazard;</span></span>
+<span id="cb10-26"><a href="#cb10-26" tabindex="-1"></a><span class="co">#&gt; they do NOT represent causal delay impacts or judicial performance metrics.</span></span></code></pre></div>
+<p>A hazard ratio <span class="math inline">\(\exp(\beta) &gt;
+1\)</span> denotes a higher resolution rate (faster resolution). All
+coefficients reflect observational associations.</p>
+<hr />
+</div>
+<div id="delay-decomposition-decompose_delay" class="section level2">
+<h2>11. Delay Decomposition (<code>decompose_delay</code>)</h2>
+<p><code>decompose_delay()</code> partitions the fitted linear predictor
+into legal and docket load components:</p>
+<p><span class="math display">\[\eta_i = \beta_{\text{legal}} \cdot
+\text{legal\_score}_i + \beta_{\text{load}} \cdot
+\text{load\_at\_filing}_i\]</span></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>decomp <span class="ot">&lt;-</span> <span class="fu">decompose_delay</span>(fit)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="cf">if</span> (fit<span class="sc">$</span>fit_success) {</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="fu">head</span>(decomp<span class="sc">$</span>case_decomposition, <span class="dv">3</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>}</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a><span class="co">#&gt;   case_id legal_score load_at_filing legal_component load_component</span></span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a><span class="co">#&gt; 1       1   0.8707606             10       0.7693942     0.14857429</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a><span class="co">#&gt; 2       2   1.0000000             14       0.8835887     0.20800401</span></span>
+<span id="cb11-8"><a href="#cb11-8" tabindex="-1"></a><span class="co">#&gt; 3       3   0.8710696              1       0.7696672     0.01485743</span></span>
+<span id="cb11-9"><a href="#cb11-9" tabindex="-1"></a><span class="co">#&gt;   total_linear_predictor absolute_legal_share absolute_load_share</span></span>
+<span id="cb11-10"><a href="#cb11-10" tabindex="-1"></a><span class="co">#&gt; 1              0.9179685            0.8381488          0.16185119</span></span>
+<span id="cb11-11"><a href="#cb11-11" tabindex="-1"></a><span class="co">#&gt; 2              1.0915927            0.8094491          0.19055093</span></span>
+<span id="cb11-12"><a href="#cb11-12" tabindex="-1"></a><span class="co">#&gt; 3              0.7845247            0.9810619          0.01893813</span></span></code></pre></div>
+<p>Absolute contribution shares are calculated on component magnitudes.
+They describe partitions of the fitted linear predictor and are
+<strong>not</strong> causal attributions.</p>
+<hr />
+</div>
+<div id="leakage-aware-temporal-validation-validate_models" class="section level2">
+<h2>12. Leakage-Aware Temporal Validation
+(<code>validate_models</code>)</h2>
+<p>In longitudinal court records, constructing a graph over pooled
+cross-sectional data creates future-neighbour leakage: cases filed in
+2012 can be connected to cases filed in 2014.</p>
+<p><code>docketscape</code> enforces a strict temporal information
+boundary: 1. Cases are split chronologically by
+<code>(filing_date, case_id)</code>. 2. The section graph, diffusion
+matrix, and IDF weights are computed <strong>only on training
+cases</strong>. 3. Validation cases are projected into the training
+representation space via <code>project_validation_legal_score()</code>,
+acquiring <strong>only training cases</strong> as neighbours. 4.
+Validation cases <strong>never</strong> form neighbours with each
+other.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>val <span class="ot">&lt;-</span> <span class="fu">validate_models</span>(fit, <span class="at">sections =</span> sections_raw, <span class="at">temporal_split =</span> <span class="fl">0.7</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">print</span>(val)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#&gt; Docketscape Delay Model Temporal Validation</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a><span class="co">#&gt; ===========================================</span></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a><span class="co">#&gt; Status:      Temporal validation completed successfully. </span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a><span class="co">#&gt; Available:   TRUE </span></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="co">#&gt; ==================================================</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a><span class="co">#&gt; LEAKAGE-AWARE TEMPORAL VALIDATION</span></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a><span class="co">#&gt; ==================================================</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a><span class="co">#&gt; Training cases:                         21</span></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a><span class="co">#&gt; Validation cases:                       9</span></span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="co">#&gt; Training future-neighbour edges:        0</span></span>
+<span id="cb12-16"><a href="#cb12-16" tabindex="-1"></a><span class="co">#&gt; Training future-neighbour cases:        0</span></span>
+<span id="cb12-17"><a href="#cb12-17" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-18"><a href="#cb12-18" tabindex="-1"></a><span class="co">#&gt; Naive validation C-index:               0.4861</span></span>
+<span id="cb12-19"><a href="#cb12-19" tabindex="-1"></a><span class="co">#&gt; Leakage-aware validation C-index:       0.5000</span></span>
+<span id="cb12-20"><a href="#cb12-20" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-21"><a href="#cb12-21" tabindex="-1"></a><span class="co">#&gt; Validation cases using validation neighbours: 0</span></span>
+<span id="cb12-22"><a href="#cb12-22" tabindex="-1"></a><span class="co">#&gt; Validation cases using training neighbours:   9</span></span>
+<span id="cb12-23"><a href="#cb12-23" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-24"><a href="#cb12-24" tabindex="-1"></a><span class="co">#&gt; Unseen-section validation cases:       0</span></span>
+<span id="cb12-25"><a href="#cb12-25" tabindex="-1"></a><span class="co">#&gt; </span></span>
+<span id="cb12-26"><a href="#cb12-26" tabindex="-1"></a><span class="co">#&gt; Statistical Safeguard:</span></span>
+<span id="cb12-27"><a href="#cb12-27" tabindex="-1"></a><span class="co">#&gt; Temporal validation evaluates how well the fitted model generalises to later-filed cases. Validation metrics describe predictive performance and do not establish causal relationships.</span></span></code></pre></div>
+<p>The package also provides auditing functions: -
+<code>check_future_neighbours()</code> to audit temporal ordering across
+graph edges. - <code>check_court_overlap()</code> to inspect court
+distributions across splits. - <code>check_near_duplicates()</code> to
+inspect same-court/date clusters.</p>
+<hr />
+</div>
+<div id="methodological-limitations" class="section level2">
+<h2>13. Methodological Limitations</h2>
+<ol style="list-style-type: decimal">
+<li><strong>Observational:</strong> Delay models describe statistical
+correlations, not causal mechanisms.</li>
+<li><strong>No Judge Rankings:</strong> The package explicitly rejects
+and does not implement judge ranking, scoring, or efficiency
+metrics.</li>
+<li><strong>No Malfeasance Inference:</strong> Slower resolution
+relative to neighbours reflects timeline disparity, not judicial
+misconduct.</li>
+<li><strong>Data Dependence:</strong> Findings depend on the accuracy
+and completeness of underlying institutional records.</li>
+<li><strong>Censoring Assumptions:</strong> Non-informative right
+censoring is assumed. Systematic causes of prolonged pendency may
+violate this assumption.</li>
+</ol>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
